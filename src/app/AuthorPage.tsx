@@ -33,6 +33,8 @@ const AuthorPage: React.FC<Props> = (props: Props) => {
   });
   const [authorDataEdit, setAuthorDataEdit] = useState<TAtuhor>(null);
 
+  const [arrayInputError, setArrayInputError] = useState<string[]>([]);
+
   const { listAuthor, isLoading } = useSelector((state: RootState) => {
     return state.authorSlice;
   });
@@ -41,6 +43,12 @@ const AuthorPage: React.FC<Props> = (props: Props) => {
   const [idEdit, setIdEdit] = useState<number | null>(null);
 
   const handleGetValue = (value: string, nameInput: keyof TAtuhor) => {
+    setArrayInputError(arrayInputError.filter((item) => item !== nameInput));
+    if (value === "" && !arrayInputError.some((item) => item === nameInput)) {
+      setArrayInputError((prev) => {
+        return [...prev, nameInput];
+      });
+    }
     setAuthorData((prev) => ({
       ...prev,
       [nameInput]: value,
@@ -55,7 +63,25 @@ const AuthorPage: React.FC<Props> = (props: Props) => {
       console.log(error);
     }
   };
+
   const handleSubmit = async () => {
+    if (
+      !Object.keys(authorData).some((item) =>
+        arrayInputError.some((input) => input === item)
+      )
+    ) {
+      setArrayInputError((prev) => {
+        return [
+          ...prev,
+          authorData.name === "" ? "name" : "",
+          authorData.bio === "" ? "bio" : "",
+          authorData.email === "" ? "email" : "",
+          authorData.avatar === "" ? "avatar" : "",
+        ];
+      });
+    }
+    if (!arrayInputError.length) return;
+
     try {
       if (idEdit !== null && authorDataEdit) {
         await dispatch(
@@ -63,12 +89,12 @@ const AuthorPage: React.FC<Props> = (props: Props) => {
         ).unwrap();
         setIdEdit(null);
         setAuthorDataEdit({
-            name:"",
-            email:"",
-            bio:"",
-            avatar:""
+          name: "",
+          email: "",
+          bio: "",
+          avatar: "",
         });
-        await dispatch(fetchAuthor()as any).unwrap()
+        await dispatch(fetchAuthor() as any).unwrap();
       } else {
         await dispatch(addAuthor(authorData) as any).unwrap();
         setAuthorData({
@@ -142,6 +168,34 @@ const AuthorPage: React.FC<Props> = (props: Props) => {
                   )
                 }
               />
+              {arrayInputError.map((input, index) => {
+                return (
+                  <>
+                    {input === item.nameInput && (
+                      <>
+                        {input === "name" && (
+                          <p style={{ color: "red" }}> Name cannot be blank</p>
+                        )}
+                        {input === "email" && (
+                          <p style={{ color: "red" }}> Email cannot be blank</p>
+                        )}
+
+                        {input === "bio" && (
+                          <p style={{ color: "red" }}> Bio cannot be blank</p>
+                        )}
+
+                        {input === "avatar" && (
+                          <p style={{ color: "red" }}>
+                            {" "}
+                            Avatar cannot be blank
+                          </p>
+                        )}
+                      </>
+                      // <p style={{color :"red"}} key={index}>Enter input field</p>
+                    )}
+                  </>
+                );
+              })}
             </>
           );
         })}
