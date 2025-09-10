@@ -2,8 +2,37 @@ import React, { useState } from "react";
 import type { DPost } from "../../constants/CreateAuthor";
 import { useDispatch } from "react-redux";
 import { createPostSaga } from "../../store/slice/postSlice";
+import * as yup from "yup";
+import { useForm } from "react-hook-form";
+import { yupResolver } from "@hookform/resolvers/yup";
 type Props = {};
 
+const schema = yup.object({
+  title: yup
+    .string()
+    .required("Title is required")
+    .min(3, "Title must be at least 3 characters")
+    .max(100, "Title cannot exceed 100 characters"),
+
+  description: yup
+    .string()
+    .required("Description is required")
+    .min(10, "Description must be at least 10 characters")
+    .max(500, "Description cannot exceed 500 characters"),
+
+  avatar: yup
+    .string()
+    .required("Avatar is required")
+    .url("Avatar must be a valid URL")
+    .min(10, "Avatar URL must be at least 10 characters")
+    .max(2048, "Avatar URL cannot exceed 2048 characters"),
+
+  author_id: yup
+    .number()
+    .required("Author ID is required")
+    .min(1, "Author ID must be at least 1")
+    .integer("Author ID must be an integer"),
+});
 const postData = [
   {
     id: 1,
@@ -32,30 +61,45 @@ const postData = [
 ];
 
 const PostForm = (props: Props) => {
-  const [post, setPost] = useState<DPost>({
-    title: "",
-    description: "",
-    avatar: "",
-    author_id: 0,
-  });
+  // const [post, setPost] = useState<DPost>({
+  //   title: "",
+  //   description: "",
+  //   avatar: "",
+  //   author_id: 0,
+  // });
 
   const dispatch = useDispatch();
 
-  const handleChangePostData = (value: string, key: keyof DPost) => {
-    
-    setPost((prev) => ({ ...prev, [key]: value }));
-  };
+  // const handleChangePostData = (value: string, key: keyof DPost) => {
+  //   setPost((prev) => ({ ...prev, [key]: value }));
+  // };
 
-  const handleSubmitPost = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<DPost>({
+    resolver: yupResolver(schema),
+    defaultValues: {
+      title: "",
+      description: "",
+      avatar: "",
+      author_id: 0,
+    },
+  });
+
+  const onSubmit = (data: DPost) => {
     const newPost: DPost = {
-      title: post.title,
-      description: post.description,
-      avatar: post.avatar,
-      author_id: Number(post.author_id),
+      title: data.title,
+      description: data.description,
+      avatar: data.avatar,
+      author_id: Number(data.author_id),
     };
     dispatch(createPostSaga(newPost));
   };
+  // // const handleSubmitPost = async (e: React.FormEvent) => {
+  //
+  // };
 
   return (
     <div style={styles.container}>
@@ -65,31 +109,35 @@ const PostForm = (props: Props) => {
           <span style={{ color: "#8a2be2" }}>Post</span> Form
         </h2>
 
-        <div style={styles.formGrid}>
+        <form onSubmit={handleSubmit(onSubmit)} style={styles.formGrid}>
           {postData.map((post) => (
             <div key={post.id} style={styles.inputGroup}>
               <label style={styles.label}>{post.label}</label>
               <input
                 type="text"
                 placeholder={post.placeHolder}
-                name={post.nameInput}
+                {...register(post.nameInput as keyof DPost)}
                 style={styles.input}
-                onChange={(e) => {
-                  handleChangePostData(
-                    e.target.value,
-                    post.nameInput as keyof DPost
-                  );
-                }}
+                // onChange={(e) => {
+                //   handleChangePostData(
+                //     e.target.value,
+                //     post.nameInput as keyof DPost
+                //   );
+                // }}
               />
+              {errors[post.nameInput as keyof DPost] && (
+                <p style={{ color: "red", fontSize: "12px", marginTop: "4px" }}>
+                  {errors[post.nameInput as keyof DPost]?.message}
+                </p>
+              )}
             </div>
           ))}
-        </div>
-
-        <div style={{ textAlign: "center", marginTop: "30px" }}>
-          <button onClick={handleSubmitPost} style={styles.button}>
-            SUBMIT
-          </button>
-        </div>
+          <div style={{ textAlign: "center", marginTop: "30px" }}>
+            <button type="submit" style={styles.button}>
+              SUBMIT
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   );

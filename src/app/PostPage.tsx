@@ -19,6 +19,8 @@ const PostPage = (props: Props) => {
     status: "",
   });
 
+  
+
   useEffect(() => {
     dispatch(fetchPostsStart(filter));
   }, [filter]);
