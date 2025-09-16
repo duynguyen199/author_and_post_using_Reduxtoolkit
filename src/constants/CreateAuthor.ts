@@ -1,8 +1,10 @@
 export type DPost = {
+    id:number,
     title:string,
     description:string,
     avatar:string,
-    author_id:number
+    author_id:number,
+    fnc?: ()=>void
 }
 
 export type DPosts = DPost[]
@@ -19,4 +21,6 @@ export type PostState = {
   loading: boolean;
   error: string | null;
   pagination: Pagination;
+  detailPost: DPost
+
 };

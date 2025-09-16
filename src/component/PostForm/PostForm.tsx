@@ -1,10 +1,16 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import type { DPost } from "../../constants/CreateAuthor";
-import { useDispatch } from "react-redux";
-import { createPostSaga } from "../../store/slice/postSlice";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  createPostSaga,
+  editPostByIdSaga,
+  fetchPostsStart,
+  fetchPostsSuccess,
+} from "../../store/slice/postSlice";
 import * as yup from "yup";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
+import type { RootState } from "../../store/store";
 type Props = {};
 
 const schema = yup.object({
@@ -68,19 +74,19 @@ const PostForm = (props: Props) => {
   //   author_id: 0,
   // });
 
+  const { detailPost } = useSelector((state: RootState) => state.postsSlice);
   const dispatch = useDispatch();
-
-  // const handleChangePostData = (value: string, key: keyof DPost) => {
-  //   setPost((prev) => ({ ...prev, [key]: value }));
-  // };
 
   const {
     register,
     handleSubmit,
-    formState: { errors },
+    reset,
+    setValue,
+    formState: { errors, isSubmitSuccessful },
   } = useForm<DPost>({
     resolver: yupResolver(schema),
     defaultValues: {
+      id: 0,
       title: "",
       description: "",
       avatar: "",
@@ -88,18 +94,43 @@ const PostForm = (props: Props) => {
     },
   });
 
-  const onSubmit = (data: DPost) => {
-    const newPost: DPost = {
-      title: data.title,
-      description: data.description,
-      avatar: data.avatar,
-      author_id: Number(data.author_id),
-    };
-    dispatch(createPostSaga(newPost));
+  const handleGetList =()=>{
+     dispatch(fetchPostsStart({limit: 10, page:1, search:"", status:""}) )
+  }
+  
+  const onSubmit =  (data: DPost) => {
+    if (detailPost.id) {
+      const newData = {...data, fnc: handleGetList}
+       dispatch(editPostByIdSaga(newData))
+    
+    } else {
+      console.log(data.id,"id")
+      const newPost: DPost = {
+        // id:data.id,
+        title: data.title,
+        description: data.description,
+        avatar: data.avatar,
+        author_id: Number(data.author_id),
+      };
+      dispatch(createPostSaga(newPost));
+    }
   };
+
   // // const handleSubmitPost = async (e: React.FormEvent) => {
   //
   // };
+  useEffect(() => {
+    setValue("title", detailPost.title);
+    setValue("description", detailPost.description);
+    setValue("avatar", detailPost.avatar);
+    setValue("author_id", detailPost.author_id);
+    setValue("id", detailPost.id);
+  }, [detailPost.id]); // không nên để object vào dependencies
+  useEffect(() => {
+    if (isSubmitSuccessful) {
+      reset();
+    }
+  }, [isSubmitSuccessful, reset]);
 
   return (
     <div style={styles.container}>
@@ -118,12 +149,6 @@ const PostForm = (props: Props) => {
                 placeholder={post.placeHolder}
                 {...register(post.nameInput as keyof DPost)}
                 style={styles.input}
-                // onChange={(e) => {
-                //   handleChangePostData(
-                //     e.target.value,
-                //     post.nameInput as keyof DPost
-                //   );
-                // }}
               />
               {errors[post.nameInput as keyof DPost] && (
                 <p style={{ color: "red", fontSize: "12px", marginTop: "4px" }}>

@@ -1,5 +1,6 @@
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 import type { DPost, PostState } from "../../constants/CreateAuthor";
+import { act } from "react";
 
 const postsSlice = createSlice({
   name: "posts",
@@ -13,13 +14,19 @@ const postsSlice = createSlice({
       total: 1,
       pages: 1,
     },
-  }as PostState,
+    detailPost: {
+      id: 0,
+      title: "",
+      description: "",
+      avatar: "",
+      author_id: 0,
+    },
+  } as PostState,
 
   reducers: {
     fetchPostsStart(state, action) {
       state.loading = true;
       state.error = null;
-      console.log(action);
     },
 
     fetchPostsSuccess(state, action) {
@@ -29,19 +36,46 @@ const postsSlice = createSlice({
       state.error = null;
     },
     createPostSaga(state, action) {
+      state.loading = true;
+      state.error = null;
+    },
+    createAuthorSuccess(state, action: PayloadAction<DPost>) {
+      state.posts.unshift(action.payload);
+      state.loading = false;
+      state.error = null;
+    },
+    createPostFailure(state, action: PayloadAction<string>) {
+      state.loading = false;
+      state.error = action.payload;
+    },
+    getPostByIdSaga(state, action) {
+      state.loading = true;
+      state.error = null;
+    },
+    getPostByIdSuccess(state, action) {
+      const { id, title, avatar, author_id,description } = action.payload.data;
+      state.detailPost = {
+        ...state.detailPost,
+        id,
+        title,
+        avatar,
+        author_id,
+        description
+      };
+      state.loading = false;
+      state.error = null;
+    },
+    editPostByIdSaga(state,action){
+      state.loading = true;
+      state.error = null;
+    },
+    deletePostByIDSaga(state,action){
       state.loading = true
       state.error = null
     },
-    createAuthorSuccess(state, action:PayloadAction<DPost>) {
-      state.posts.unshift(action.payload)
-      state.loading = false
-      state.error = null
-    },
-    createPostFailure(state, action:PayloadAction<string>){
-      state.loading = false
-      state.error = action.payload
-    }
+
   },
+
 });
 
 export const {
@@ -49,7 +83,11 @@ export const {
   fetchPostsSuccess,
   createAuthorSuccess,
   createPostSaga,
-  createPostFailure
+  createPostFailure,
+  getPostByIdSuccess,
+  getPostByIdSaga,
+  editPostByIdSaga,
+  deletePostByIDSaga
 } = postsSlice.actions;
 
 export default postsSlice.reducer;
